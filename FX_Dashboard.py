@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="FX Dashboard", layout="wide")
 
-st.title("📈 FX Strategy Dashboard")
+st.title("FX Strategy Dashboard")
 st.write("Interactive rolling correlations and FX cross-return matrix (all rates in USD/Foreign convention).")
 
 # --------------------------
