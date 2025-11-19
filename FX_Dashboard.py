@@ -34,7 +34,7 @@ tab1, tab2 = st.tabs(["🔍 FX Correlations", "🌀 FX Fan Chart Forecast"])
 # TAB 1: FX CORRELATIONS
 # ==============================================================================
 with tab1:
-    st.subheader("Rolling Returns Correlation (USD/Foreign Convention)")
+    st.subheader("Rolling FX Returns Correlation (USD/Foreign Convention)")
 
     col1, col2, col3 = st.columns([1, 1, 1])
 
@@ -169,11 +169,13 @@ with tab1:
 
     st.plotly_chart(fig_heatmap, use_container_width=True)
 
+    
+
 # ==============================================================================
 # TAB 2: FAN CHART FORECAST
 # ==============================================================================
 with tab2:
-    st.subheader("🎯 FX Volatility Fan Chart (Geometric Brownian Motion)")
+    st.subheader("🎯 Worst-Case Scenario Chart (Geometric Brownian Motion)")
 
     # Allow user to choose ticker (default EUR/USD)
     fx_choice = st.selectbox(
@@ -192,7 +194,7 @@ with tab2:
             log_ret = np.log(data / data.shift(1)).dropna()
             sigma = log_ret.std() * np.sqrt(252)
             return float(S0), float(sigma), True
-        except:
+        except Exception as e:
             return 1.08, 0.10, False
 
     S0, sigma, success = get_spot_and_vol(fx_choice)
@@ -202,17 +204,21 @@ with tab2:
 
     # GBM Parameters
     mu = 0.0  # drift = 0 for FX risk-neutral or uncertainty bands
-    horizons_months = np.array([1, 3, 6, 9, 12])
+    horizons_months = np.array([0, 3, 6, 9, 12])  # <-- INCLUDE t=0
     T = horizons_months / 12.0
     percentiles = [0.5, 0.75, 0.85, 0.95]
     z_scores = norm.ppf(percentiles)
 
-    # Compute fan
+    # Compute fan: include t=0 explicitly
     fan_data = {}
     for t, month in zip(T, horizons_months):
-        base = (mu - 0.5 * sigma**2) * t
-        vol_term = sigma * np.sqrt(t)
-        spots = S0 * np.exp(base + vol_term * z_scores)
+        if t == 0:
+            # At t=0, all percentiles = S0 (no uncertainty)
+            spots = np.full(len(percentiles), S0)
+        else:
+            base = (mu - 0.5 * sigma**2) * t
+            vol_term = sigma * np.sqrt(t)
+            spots = S0 * np.exp(base + vol_term * z_scores)
         fan_data[month] = spots
 
     df_fan = pd.DataFrame(fan_data, index=[f"P{int(p*100)}" for p in percentiles]).T
@@ -220,44 +226,42 @@ with tab2:
     # Plot with Plotly
     fig_fan = go.Figure()
 
-    # Median
+    # Keep the median
     fig_fan.add_trace(go.Scatter(
-        x=df_fan.index, y=df_fan['P50'],
+        x=df_fan.index,
+        y=df_fan['P50'],
         mode='lines',
         name='Median (50%)',
         line=dict(color='black', width=2)
     ))
 
-    # Confidence bands
+    # Add upper percentiles as simple lines (no fill)
     fig_fan.add_trace(go.Scatter(
-        x=df_fan.index.tolist() + df_fan.index[::-1].tolist(),
-        y=df_fan['P75'].tolist() + df_fan['P50'][::-1].tolist(),
-        fill='toself',
-        fillcolor='rgba(173, 216, 230, 0.5)',  # lightblue
-        line=dict(color='rgba(0,0,0,0)'),
-        name='50–75%'
+        x=df_fan.index,
+        y=df_fan['P75'],
+        mode='lines',
+        name='75th Percentile',
+        line=dict(color='gold', dash='dash')
     ))
 
     fig_fan.add_trace(go.Scatter(
-        x=df_fan.index.tolist() + df_fan.index[::-1].tolist(),
-        y=df_fan['P85'].tolist() + df_fan['P75'][::-1].tolist(),
-        fill='toself',
-        fillcolor='rgba(30, 144, 255, 0.4)',  # dodgerblue
-        line=dict(color='rgba(0,0,0,0)'),
-        name='75–85%'
+        x=df_fan.index,
+        y=df_fan['P85'],
+        mode='lines',
+        name='85th Percentile',
+        line=dict(color='indianred', dash='dot')
     ))
 
     fig_fan.add_trace(go.Scatter(
-        x=df_fan.index.tolist() + df_fan.index[::-1].tolist(),
-        y=df_fan['P95'].tolist() + df_fan['P85'][::-1].tolist(),
-        fill='toself',
-        fillcolor='rgba(0, 0, 139, 0.3)',  # darkblue
-        line=dict(color='rgba(0,0,0,0)'),
-        name='85–95%'
+        x=df_fan.index,
+        y=df_fan['P95'],
+        mode='lines',
+        name='95th Percentile',
+        line=dict(color='darkblue', dash='dot')
     ))
 
     # Optional: upper percentile lines
-    for p, color in zip(['P75', 'P85', 'P95'], ['lightblue', 'steelblue', 'darkblue']):
+    for p in ['P75', 'P85', 'P95']:
         fig_fan.add_trace(go.Scatter(
             x=df_fan.index, y=df_fan[p],
             mode='lines',
@@ -266,10 +270,8 @@ with tab2:
             hoverinfo='skip'
         ))
 
-    # Define numeric positions (in months)
-    horizons_months = [0, 3, 6, 9, 12]
-
-    # Define corresponding custom labels
+    # Define numeric positions (in months) — now includes 0
+    horizons_months_plot = [0, 3, 6, 9, 12]
     x_labels = ["Spot", "3M later", "6M later", "9M later", "1Y later"]
 
     fig_fan.update_layout(
@@ -280,8 +282,9 @@ with tab2:
         height=500,
         xaxis=dict(
             tickmode='array',
-            tickvals=horizons_months,      # numeric positions
-            ticktext=x_labels              # custom labels
+            tickvals=horizons_months_plot,
+            ticktext=x_labels,
+            range=[-0.5, 12.5]  # ensures full visibility of Spot at 0
         ),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
@@ -289,6 +292,10 @@ with tab2:
     st.plotly_chart(fig_fan, use_container_width=True)
 
     st.info("""
-    **Methodology**: Forecast based on Geometric Brownian Motion with zero drift (standard for FX uncertainty bands).  
-    Bands reflect historical volatility over the past ~1 year. Not a price prediction—measures **uncertainty range**.
+    **Methodology**:  
+    - **Spot rate (`S₀`)**: Today’s observed market price (most recent closing rate).  
+    - **Volatility (`σ`)**: Annualised historical volatility computed from daily log returns over the past 1 year (252 trading days).  
+    - **Model**: Geometric Brownian Motion (GBM) with **zero drift** — meaning no assumed directional trend, only uncertainty from volatility.  
+    - **Percentiles** (e.g. 50%, 75%, 85%, 95%) show the statistical distribution of possible future rate paths under this model.  
+    → This is **not a price prediction**, but a visualisation of **potential uncertainty** around the current spot rate.
     """)
