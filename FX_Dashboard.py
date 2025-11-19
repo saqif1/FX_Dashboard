@@ -28,7 +28,7 @@ def standardize_to_usd_base(series, ticker):
 # --------------------------
 # Create Tabs
 # --------------------------
-tab1, tab2, tab3 = st.tabs(["🔍 FX Correlations", "🌀 FX Fan Chart Forecast", "🚀 Market Colour"])
+tab1, tab2, tab3 = st.tabs(["🔍 FX Correlations", "📉 WC Chart", "🚀 Market Colour"])
 
 # ==============================================================================
 # TAB 1: FX CORRELATIONS
