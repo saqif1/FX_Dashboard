@@ -232,7 +232,7 @@ with tab2:
         y=df_fan['P50'],
         mode='lines',
         name='Median (50%)',
-        line=dict(color='black', width=2)
+        line=dict(color='red', width=2)
     ))
 
     # Add upper percentiles as simple lines (no fill)
@@ -241,7 +241,7 @@ with tab2:
         y=df_fan['P75'],
         mode='lines',
         name='75th Percentile',
-        line=dict(color='gold', dash='dash')
+        line=dict(color='gold', dash='dot')
     ))
 
     fig_fan.add_trace(go.Scatter(
@@ -261,14 +261,14 @@ with tab2:
     ))
 
     # Optional: upper percentile lines
-    for p in ['P75', 'P85', 'P95']:
-        fig_fan.add_trace(go.Scatter(
-            x=df_fan.index, y=df_fan[p],
-            mode='lines',
-            line=dict(color='blue', dash='dot', width=1),
-            showlegend=False,
-            hoverinfo='skip'
-        ))
+    # for p in ['P75', 'P85', 'P95']:
+    #     fig_fan.add_trace(go.Scatter(
+    #         x=df_fan.index, y=df_fan[p],
+    #         mode='lines',
+    #         line=dict(color='blue', dash='dot', width=1),
+    #         showlegend=False,
+    #         hoverinfo='skip'
+    #     ))
 
     # Define numeric positions (in months) — now includes 0
     horizons_months_plot = [0, 3, 6, 9, 12]
