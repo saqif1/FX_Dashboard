@@ -299,3 +299,9 @@ with tab2:
     - **Percentiles** (e.g. 50%, 75%, 85%, 95%) show the statistical distribution of possible future rate paths under this model.  
     → This is **not a price prediction**, but a visualisation of **potential uncertainty** around the current spot rate.
     """)
+# ==============================================================================
+# TAB 2: MARKET COLOUR
+# ==============================================================================
+with tab3:
+    st.subheader("Market Colour")
+
