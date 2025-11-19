@@ -28,7 +28,7 @@ def standardize_to_usd_base(series, ticker):
 # --------------------------
 # Create Tabs
 # --------------------------
-tab1, tab2 = st.tabs(["🔍 FX Correlations", "🌀 FX Fan Chart Forecast"])
+tab1, tab2, tab3 = st.tabs(["🔍 FX Correlations", "🌀 FX Fan Chart Forecast", "🚀 Market Colour"])
 
 # ==============================================================================
 # TAB 1: FX CORRELATIONS
@@ -304,4 +304,6 @@ with tab2:
 # ==============================================================================
 with tab3:
     st.subheader("Market Colour")
+
+    st.error("To test LMM Model..")
 
