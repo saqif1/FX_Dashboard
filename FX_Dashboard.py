@@ -9,7 +9,7 @@ import warnings
 import datetime as dt
 warnings.filterwarnings("ignore")
 
-st.cache_data(ttl=10*3600)  # Refresh once per 10 hours
+
 def load_treasury_yield_data():
     import pandas as pd
     import datetime as dt
@@ -34,7 +34,7 @@ def load_treasury_yield_data():
             return pd.DataFrame()
 
     current_year = dt.datetime.now().year
-    n_years = 3
+    n_years = 2
     years = list(range(current_year - n_years, current_year + 1))
     df_list = []
 
