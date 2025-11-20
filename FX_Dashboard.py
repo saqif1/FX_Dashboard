@@ -305,141 +305,152 @@ with tab2:
 # TAB 3: MARKET COLOUR — U.S. Treasury Yield Curve
 # ==============================================================================
 with tab3:
-    st.subheader("Market Colour: U.S. Treasury Yield Curve")
+    #st.subheader("Market Colour: U.S. Treasury Yield Curve")
 
-    def scrape_table(url: str) -> pd.DataFrame:
-        try:
-            tables = pd.read_html(url)
-            if not tables:
+    @st.cache_data(ttl=24*3600)  # Cache for 24 hours
+    def load_treasury_yield_data():
+        def scrape_table(url: str) -> pd.DataFrame:
+            try:
+                tables = pd.read_html(url)
+                if not tables:
+                    return pd.DataFrame()
+                df = tables[0]
+                df.columns = [col.replace(' ', '_').replace('.', '').replace('(', '').replace(')', '') for col in df.columns]
+                if 'Date' in df.columns:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                return df
+            except Exception as e:
+                # Important: don't use st.warning here — cached functions should not have side effects
                 return pd.DataFrame()
-            df = tables[0]
-            df.columns = [col.replace(' ', '_').replace('.', '').replace('(', '').replace(')', '') for col in df.columns]
-            if 'Date' in df.columns:
-                df['Date'] = pd.to_datetime(df['Date'])
-            return df
-        except Exception as e:
-            st.warning(f"Scraping error: {e}")
-            return pd.DataFrame()
-        
-    # Fetch and process data
-    current_year = dt.datetime.now().year
-    n_years = 8
-    years = list(range(current_year - n_years, current_year + 1))
-    df_list = []
 
-    for year in years:
-        treasury_url = f"https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value={year}"
-        df_year = scrape_table(treasury_url)
-        if not df_year.empty:
-            df_list.append(df_year)
+        current_year = dt.datetime.now().year
+        n_years = 10
+        years = list(range(current_year - n_years, current_year + 1))
+        df_list = []
 
-    if not df_list:
-        st.error("No Treasury yield data could be retrieved.")
-    else:
+        for year in years:
+            treasury_url = f"https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value={year}"
+            df_year = scrape_table(treasury_url)
+            if not df_year.empty:
+                df_list.append(df_year)
+
+        if not df_list:
+            return None  # Signal failure
+
         df = pd.concat(df_list, ignore_index=True)
         df = df.drop_duplicates(subset=['Date']).sort_values('Date').reset_index(drop=True)
 
         required_cols = ["Date", "3_Mo", "5_Yr", "10_Yr", "30_Yr"]
         if not all(col in df.columns for col in required_cols):
-            st.error("Required yield columns missing.")
+            return None
+
+        df = df[required_cols].copy()
+        df = df.dropna(subset=["3_Mo", "5_Yr", "10_Yr", "30_Yr"])
+        df = df.sort_values("Date").reset_index(drop=True)
+
+        return df if not df.empty else None
+
+
+    with tab3:
+        st.subheader("Market Colour: U.S. Treasury Yield Curve")
+
+        # Load data (cached)
+        df = load_treasury_yield_data()
+
+        if df is None:
+            st.error("No Treasury yield data could be retrieved.")
         else:
-            df = df[required_cols].copy()
-            df = df.dropna(subset=["3_Mo", "5_Yr", "10_Yr", "30_Yr"])
-            df = df.sort_values("Date").reset_index(drop=True)
+            latest = df.iloc[-1]
+            date_latest = latest["Date"].strftime("%Y-%m-%d")
+            three_mo = latest["3_Mo"]
+            five_yr = latest["5_Yr"]
+            ten_yr = latest["10_Yr"]
+            thirty_yr = latest["30_Yr"]
 
-            if df.empty:
-                st.warning("No valid data after cleaning.")
+            # Determine curve state
+            if three_mo > five_yr:
+                curve_state = "Inverted (3-Mo > 5-Yr)"
+                recommendation = (
+                    "Suggests market expectations of near-term monetary policy easing. "
+                    "Consider implications for short-term funding costs, cash investment yields, and potential FX volatility as rate differentials shift."
+                )
+                outlook = (
+                    "Monitor for changes in rate and currency dynamics that may affect hedging strategies and liquidity positioning."
+                )
+                current_label = "Current: Inverted"
+                annotation_bg = "lightcoral"
             else:
-                latest = df.iloc[-1]
-                date_latest = latest["Date"].strftime("%Y-%m-%d")
-                three_mo = latest["3_Mo"]
-                five_yr = latest["5_Yr"]
-                ten_yr = latest["10_Yr"]
-                thirty_yr = latest["30_Yr"]
-
-                # Determine curve state
-                if three_mo > five_yr:
-                    curve_state = "Inverted (3-Mo > 5-Yr)"
-                    recommendation = (
-                        "Suggests market expectations of near-term monetary policy easing. "
-                        "Consider implications for short-term funding costs, cash investment yields, and potential FX volatility as rate differentials shift."
-                    )
-                    outlook = (
-                        "Monitor for changes in rate and currency dynamics that may affect hedging strategies and liquidity positioning."
-                    )
-                    current_label = "Current: Inverted"
-                    annotation_bg = "lightcoral"
-                else:
-                    curve_state = "Normal (3-Mo ≤ 5-Yr)"
-                    recommendation = (
-                        "Indicates stable or tightening monetary conditions. "
-                        "Supports maintaining flexibility in funding and investment tenors, with attention to evolving rate and FX risks."
-                    )
-                    outlook = (
-                        "Stay alert to curve steepening or flattening trends that could signal shifts in macro or market sentiment."
-                    )
-                    current_label = "Current: Normal"
-                    annotation_bg = "lightgreen"
-
-                # Display analysis
-                st.markdown(f"### U.S. Treasury Yield Curve Analysis — As of {date_latest}")
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("3-Month", f"{three_mo:.2f}%")
-                col2.metric("5-Year", f"{five_yr:.2f}%")
-                col3.metric("10-Year", f"{ten_yr:.2f}%")
-                col4.metric("30-Year", f"{thirty_yr:.2f}%")
-
-                st.markdown(f"**Yield Curve State:** {curve_state}")
-                st.info(f"**Investment Implication:** {recommendation}")
-                st.info(f"**Forward Watch:** {outlook}")
-
-                # Prepare data for plotting
-                plot_df = df.melt(id_vars='Date', value_vars=["3_Mo", "5_Yr", "10_Yr", "30_Yr"],
-                                  var_name='Maturity', value_name='Yield (%)')
-                label_map = {
-                    "3_Mo": "13-Week (3-Mo)",
-                    "5_Yr": "5-Year",
-                    "10_Yr": "10-Year",
-                    "30_Yr": "30-Year"
-                }
-                plot_df['Maturity'] = plot_df['Maturity'].map(label_map)
-
-                # Create Plotly figure
-                fig = px.line(
-                    plot_df,
-                    x='Date',
-                    y='Yield (%)',
-                    color='Maturity',
-                    title=f"U.S. Treasury Yield Curve – {date_latest}",
-                    template='plotly_white',
-                    height=600
+                curve_state = "Normal (3-Mo ≤ 5-Yr)"
+                recommendation = (
+                    "Indicates stable or tightening monetary conditions. "
+                    "Supports maintaining flexibility in funding and investment tenors, with attention to evolving rate and FX risks."
                 )
-
-                fig.add_annotation(
-                    x=1.0, y=1.0,
-                    xref="paper", yref="paper",
-                    text=current_label,
-                    showarrow=False,
-                    xanchor="right", yanchor="top",
-                    bgcolor=annotation_bg,
-                    font=dict(color="black", size=12),
-                    bordercolor="black", borderwidth=1
+                outlook = (
+                    "Stay alert to curve steepening or flattening trends that could signal shifts in macro or market sentiment."
                 )
+                current_label = "Current: Normal"
+                annotation_bg = "lightgreen"
 
-                fig.update_layout(
-                    legend_title="Maturity",
-                    hovermode='x unified',
-                    xaxis=dict(
-                        rangeselector=dict(buttons=[
-                            dict(count=3, label="3m", step="month", stepmode="backward"),
-                            dict(count=6, label="6m", step="month", stepmode="backward"),
-                            dict(count=1, label="1y", step="year", stepmode="backward"),
-                            dict(step="all", label="All")
-                        ]),
-                        rangeslider=dict(visible=True),
-                        type="date"
-                    )
+            # Display analysis
+            st.markdown(f"### U.S. Treasury Yield Curve Analysis — As of {date_latest}")
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("3-Month", f"{three_mo:.2f}%")
+            col2.metric("5-Year", f"{five_yr:.2f}%")
+            col3.metric("10-Year", f"{ten_yr:.2f}%")
+            col4.metric("30-Year", f"{thirty_yr:.2f}%")
+
+            st.markdown(f"**Yield Curve State:** {curve_state}")
+            st.info(f"**Recommendation:** {recommendation}")
+            st.info(f"**Forward Watch:** {outlook}")
+
+            # Prepare data for plotting
+            plot_df = df.melt(id_vars='Date', value_vars=["3_Mo", "5_Yr", "10_Yr", "30_Yr"],
+                            var_name='Maturity', value_name='Yield (%)')
+            label_map = {
+                "3_Mo": "13-Week (3-Mo)",
+                "5_Yr": "5-Year",
+                "10_Yr": "10-Year",
+                "30_Yr": "30-Year"
+            }
+            plot_df['Maturity'] = plot_df['Maturity'].map(label_map)
+
+            # Create Plotly figure
+            fig = px.line(
+                plot_df,
+                x='Date',
+                y='Yield (%)',
+                color='Maturity',
+                title=f"U.S. Treasury Yield Curve – {date_latest}",
+                template='plotly_white',
+                height=600
+            )
+
+            fig.add_annotation(
+                x=1.0, y=1.0,
+                xref="paper", yref="paper",
+                text=current_label,
+                showarrow=False,
+                xanchor="right", yanchor="top",
+                bgcolor=annotation_bg,
+                font=dict(color="black", size=12),
+                bordercolor="black", borderwidth=1
+            )
+
+            fig.update_layout(
+                legend_title="Maturity",
+                hovermode='x unified',
+                xaxis=dict(
+                    rangeselector=dict(buttons=[
+                        dict(count=3, label="3m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all", label="All")
+                    ]),
+                    rangeslider=dict(visible=True),
+                    type="date"
                 )
+            )
 
-                st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True)
 
+            st.caption("Data sourced from U.S. Department of the Treasury – Daily Treasury Yield Curve Rates")
