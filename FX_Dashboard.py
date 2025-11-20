@@ -307,7 +307,7 @@ with tab3:
 
     import datetime as dt
 
-    @st.cache_data(ttl=86400)  # Cache for 24 hours (86400 seconds)
+    #@st.cache_data(ttl=86400)  # Cache for 24 hours (86400 seconds)
     def fetch_treasury_data(n_years_back: int = 10) -> pd.DataFrame:
         def scrape_table(url: str) -> pd.DataFrame:
             try:
