@@ -34,7 +34,7 @@ def load_treasury_yield_data():
             return pd.DataFrame()
 
     current_year = dt.datetime.now().year
-    n_years = 10
+    n_years = 3
     years = list(range(current_year - n_years, current_year + 1))
     df_list = []
 
@@ -359,7 +359,7 @@ with tab2:
 # TAB 3: MARKET COLOUR — U.S. Treasury Yield Curve
 # ==============================================================================
 with tab3:
-    st.subheader("U.S. Treasury Yield Curve")
+    #st.subheader("U.S. Treasury Yield Curve")
 
     df = load_treasury_yield_data()
 
