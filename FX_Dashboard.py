@@ -395,8 +395,8 @@ with tab3:
         annotation_bg = "lightcoral" if three_mo > five_yr else "lightgreen"
 
         # Combine into clean takeaways
-        recommendation = near_term_msg
-        outlook = long_msg
+        insight_one = near_term_msg
+        insight_two = long_msg
 
         # Display analysis
         st.markdown(f"### U.S. Treasury Yield Curve Analysis — As of {date_latest}")
@@ -407,8 +407,8 @@ with tab3:
         col4.metric("30-Year", f"{thirty_yr:.2f}%")
 
         st.markdown(f"**Yield Curve State:** {curve_state}")
-        st.info(f"**Recommendation:** {recommendation}")
-        st.info(f"**Forward Watch:** {outlook}")
+        st.info(f"**Insight 1:** {insight_one}")
+        st.info(f"**Insight 2:** {insight_two}")
 
         # Prepare data for plotting
         plot_df = df.melt(
