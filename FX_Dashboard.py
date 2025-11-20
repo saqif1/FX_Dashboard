@@ -464,4 +464,4 @@ with tab3:
         )
 
         st.plotly_chart(fig, use_container_width=True)
-        st.caption("Data sourced from [U.S. Department of the Treasury](https://home.treasury.gov/resource-center/data-chart-center/interest-rates)")
+        st.caption("Data sourced from [U.S. Department of the Treasury](https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics)")
