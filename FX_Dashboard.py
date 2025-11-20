@@ -231,7 +231,7 @@ with tab1:
 # TAB 2: FAN CHART FORECAST
 # ==============================================================================
 with tab2:
-    st.subheader("Worst-Case Scenario Chart (Geometric Brownian Motion)")
+    st.subheader("Worst-Case Scenario Chart (GBM)")
 
     # Allow user to choose ticker (default EUR/USD)
     fx_choice = st.selectbox(
@@ -331,7 +331,7 @@ with tab2:
     x_labels = ["Spot", "3M later", "6M later", "9M later", "1Y later"]
 
     fig_fan.update_layout(
-        title=f"FX Fan Chart – GBM Forecast<br>Pair: {fx_choice} | Spot: {S0:.5f} | Vol: {sigma:.2%}",
+        title=f"FX WC Chart – GBM Forecast<br>Pair: {fx_choice} | Spot: {S0:.5f} | Vol: {sigma:.2%}",
         xaxis_title="Horizon",
         yaxis_title=fx_choice,
         template="plotly_white",
@@ -383,11 +383,11 @@ with tab3:
         # === Insight 2: Long-end shape (10-Yr vs 30-Yr) ===
         long_spread = thirty_yr - ten_yr
         if long_spread > 0.25:  # >25 bps
-            long_msg = "📈 Long end steepening: higher long-term inflation or growth expectations."
+            long_msg = "📈 Long end steepening -> higher long-term inflation or growth expectations."
         elif long_spread < -0.10:  # inverted long end
-            long_msg = "📉 30Y yield below 10Y: deep concern about long-term growth or deflation."
+            long_msg = "📉 30Y yield below 10Y -> deep concern about long-term growth or deflation."
         else:
-            long_msg = "➖ Long end flat: uncertainty on long-term outlook; term premium compressed."
+            long_msg = "➖ Long end flat -> uncertainty on long-term outlook; term premium compressed."
 
         # Keep your existing display logic simple
         curve_state = "Inverted (3-Mo > 5-Yr)" if three_mo > five_yr else "Normal (3-Mo ≤ 5-Yr)"
