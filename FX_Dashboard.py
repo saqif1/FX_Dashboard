@@ -231,7 +231,7 @@ with tab1:
 # TAB 2: FAN CHART FORECAST
 # ==============================================================================
 with tab2:
-    st.subheader("🎯 Worst-Case Scenario Chart (Geometric Brownian Motion)")
+    st.subheader("Worst-Case Scenario Chart (Geometric Brownian Motion)")
 
     # Allow user to choose ticker (default EUR/USD)
     fx_choice = st.selectbox(
