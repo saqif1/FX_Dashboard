@@ -374,28 +374,29 @@ with tab3:
         thirty_yr = latest["30_Yr"]
 
         # Determine curve state
+        # === Insight 1: Near-term policy expectation (3-Mo vs 5-Yr) ===
         if three_mo > five_yr:
-            curve_state = "Inverted (3-Mo > 5-Yr)"
-            recommendation = (
-                "Suggests market expectations of near-term monetary policy easing. "
-                "Consider implications for short-term funding costs, cash investment yields, and potential FX volatility as rate differentials shift."
-            )
-            outlook = (
-                "Monitor for changes in rate and currency dynamics that may affect hedging strategies and liquidity positioning."
-            )
-            current_label = "Current: Inverted"
-            annotation_bg = "lightcoral"
+            near_term_msg = "🔴 Markets expect **Fed rate cuts** within 6–12 months (inversion signals growth concerns)."
         else:
-            curve_state = "Normal (3-Mo ≤ 5-Yr)"
-            recommendation = (
-                "Indicates stable or tightening monetary conditions. "
-                "Supports maintaining flexibility in funding and investment tenors, with attention to evolving rate and FX risks."
-            )
-            outlook = (
-                "Stay alert to curve steepening or flattening trends that could signal shifts in macro or market sentiment."
-            )
-            current_label = "Current: Normal"
-            annotation_bg = "lightgreen"
+            near_term_msg = "🟢 Markets expect rates to **hold or rise** (no easing priced in near term)."
+
+        # === Insight 2: Long-end shape (10-Yr vs 30-Yr) ===
+        long_spread = thirty_yr - ten_yr
+        if long_spread > 0.25:  # >25 bps
+            long_msg = "📈 Long end steepening: higher long-term inflation or growth expectations."
+        elif long_spread < -0.10:  # inverted long end
+            long_msg = "📉 30Y yield below 10Y: deep concern about long-term growth or deflation."
+        else:
+            long_msg = "➖ Long end flat: uncertainty on long-term outlook; term premium compressed."
+
+        # Keep your existing display logic simple
+        curve_state = "Inverted (3-Mo > 5-Yr)" if three_mo > five_yr else "Normal (3-Mo ≤ 5-Yr)"
+        current_label = "Current: Inverted" if three_mo > five_yr else "Current: Normal"
+        annotation_bg = "lightcoral" if three_mo > five_yr else "lightgreen"
+
+        # Combine into clean takeaways
+        recommendation = near_term_msg
+        outlook = long_msg
 
         # Display analysis
         st.markdown(f"### U.S. Treasury Yield Curve Analysis — As of {date_latest}")
