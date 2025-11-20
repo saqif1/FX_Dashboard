@@ -34,7 +34,7 @@ def load_treasury_yield_data():
             return pd.DataFrame()
 
     current_year = dt.datetime.now().year
-    n_years = 2
+    n_years = 10
     years = list(range(current_year - n_years, current_year + 1))
     df_list = []
 
