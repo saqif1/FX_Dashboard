@@ -407,8 +407,8 @@ with tab3:
         col4.metric("30-Year", f"{thirty_yr:.2f}%")
 
         st.markdown(f"**Yield Curve State:** {curve_state}")
-        st.info(f"**Insight 1:** {insight_one}")
-        st.info(f"**Insight 2:** {insight_two}")
+        st.info(f"**Near-term policy expectation:** {insight_one}")
+        st.info(f"**Long-end shape:** {insight_two}")
 
         # Prepare data for plotting
         plot_df = df.melt(
