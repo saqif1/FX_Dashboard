@@ -415,10 +415,10 @@ with tab3:
         # Display analysis
         st.markdown(f"### U.S. Treasury Yield Curve Analysis — As of {date_latest}")
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric("3-Month", f"{three_mo:.2f}%", f"{pct_3mo:.2f} bps")
-        col2.metric("5-Year", f"{five_yr:.2f}%", f"{pct_5y:.2f} bps")
-        col3.metric("10-Year", f"{ten_yr:.2f}%", f"{pct_10y:.2f} bps")
-        col4.metric("30-Year", f"{thirty_yr:.2f}%", f"{pct_30y:.2f} bps")
+        col1.metric("3-Month", f"{three_mo:.2f}%", f"{pct_3mo:.1f} bps")
+        col2.metric("5-Year", f"{five_yr:.2f}%", f"{pct_5y:.1f} bps")
+        col3.metric("10-Year", f"{ten_yr:.2f}%", f"{pct_10y:.1f} bps")
+        col4.metric("30-Year", f"{thirty_yr:.2f}%", f"{pct_30y:.1f} bps")
 
 
         st.markdown(f"**Yield Curve State:** {curve_state}")
