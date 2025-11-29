@@ -372,6 +372,20 @@ with tab3:
         five_yr = latest["5_Yr"]
         ten_yr = latest["10_Yr"]
         thirty_yr = latest["30_Yr"]
+        
+        # Previous day's yields for delta calc
+        prev = df.iloc[-2]
+        
+        three_mo_prev = prev["3_Mo"]
+        five_yr_prev = prev["5_Yr"]
+        ten_yr_prev = prev["10_Yr"]
+        thirty_yr_prev = prev["30_Yr"]
+        
+        # Percent changes (%)
+        pct_3mo = (three_mo - three_mo_prev) / three_mo_prev * 100
+        pct_5y  = (five_yr - five_yr_prev) / five_yr_prev * 100
+        pct_10y = (ten_yr - ten_yr_prev) / ten_yr_prev * 100
+        pct_30y = (thirty_yr - thirty_yr_prev) / thirty_yr_prev * 100
 
         # Determine curve state
         # === Insight 1: Near-term policy expectation (3-Mo vs 5-Yr) ===
@@ -401,10 +415,11 @@ with tab3:
         # Display analysis
         st.markdown(f"### U.S. Treasury Yield Curve Analysis — As of {date_latest}")
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric("3-Month", f"{three_mo:.2f}%")
-        col2.metric("5-Year", f"{five_yr:.2f}%")
-        col3.metric("10-Year", f"{ten_yr:.2f}%")
-        col4.metric("30-Year", f"{thirty_yr:.2f}%")
+        col1.metric("3-Month", f"{three_mo:.2f}%", f"{pct_3mo:.2f}%")
+        col2.metric("5-Year", f"{five_yr:.2f}%", f"{pct_5y:.2f}%")
+        col3.metric("10-Year", f"{ten_yr:.2f}%", f"{pct_10y:.2f}%")
+        col4.metric("30-Year", f"{thirty_yr:.2f}%", f"{pct_30y:.2f}%")
+
 
         st.markdown(f"**Yield Curve State:** {curve_state}")
         st.info(f"**Near-term policy expectation:** {insight_one}")
